@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import os
 from jinja2 import Template, Environment, PackageLoader, select_autoescape
 
 
@@ -13,11 +14,12 @@ class TemplateEngine(object):
         )
 
     def render_readme(self, outpath, images):
-        template: Template = self.env.get_template('readme.html')
-        with open(outpath) as f_readme:
+        template: Template = self.env.get_template('readme.rst')
+        with open(os.path.join(outpath, "readme.rst"), "w") as f_readme:
             f_readme.write(template.render(
                 images=images, folder_name=outpath
             ))
+            f_readme.close()
 
 
 class ImageCollection(object):
@@ -28,7 +30,7 @@ class ImageCollection(object):
 
     def add(self, image):
         if type(image) == Image:
-            collection.append(image)
+            self.collection.append(image)
         else:
             raise TypeError()
 
@@ -52,7 +54,7 @@ class Image(object):
     def to_dict(self):
         return {
             "name": self.name,
-            "description", self.description,
+            "description": self.description,
             "width": {
                 "small": self.width["small"],
                 "large": self.width["large"]

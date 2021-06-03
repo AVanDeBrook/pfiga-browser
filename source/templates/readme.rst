@@ -10,7 +10,7 @@ Below are all the graphics in this folder:
 {{ image.name }}: small
 
 .. image:: {{ image.name }}
-   :width: {{ image.wdith.small }}
+   :width: {{ image.width.small }}
 
 {{ image.name }}: large
 

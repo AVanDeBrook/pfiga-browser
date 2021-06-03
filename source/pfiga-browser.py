@@ -28,7 +28,7 @@ def main(args):
             if not os.path.isdir(os.path.join(path, file)):
                 collection.add(Image(
                     name=str(file),
-                    description="",
+                    description="Add description here.",
                     width={
                         "small": 300,
                         "large": 600
