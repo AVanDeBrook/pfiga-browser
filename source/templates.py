@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os
+from pathlib import PurePath
 from jinja2 import Template, Environment, PackageLoader, select_autoescape
 
 
@@ -22,22 +23,6 @@ class TemplateEngine(object):
             f_readme.close()
 
 
-class ImageCollection(object):
-    collection = []
-
-    def __init__(self):
-        pass
-
-    def add(self, image):
-        if type(image) == Image:
-            self.collection.append(image)
-        else:
-            raise TypeError()
-
-    def to_dict(self):
-        return [image.to_dict() for image in self.collection]
-
-
 class Image(object):
     name = ""
     description = ""
@@ -46,12 +31,15 @@ class Image(object):
         "large": 600
     }
 
-    def __init__(self, name: str, description: str, width: dict):
-        self.name = name
-        self.description = description
-        self.width = width
+    def __init__(self, name: str = None, description: str = None, width: dict = None):
+        if name is not None:
+            self.name = name
+        if description is not None:
+            self.description = description
+        if width is not None:
+            self.width = width
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         return {
             "name": self.name,
             "description": self.description,
@@ -60,3 +48,24 @@ class Image(object):
                 "large": self.width["large"]
             }
         }
+
+
+class ImageCollection(object):
+    collection = []
+    valid_exts = []
+
+    def __init__(self, collection: list[Image] = None, exts: list[str] = None):
+        if collection is not None:
+            self.collection = collection
+        if exts is not None:
+            self.valid_exts = exts
+
+    def add(self, image: Image):
+        if type(image) == Image:
+            if PurePath(image.name).suffix in self.valid_exts:
+                self.collection.append(image)
+        else:
+            raise TypeError()
+
+    def to_dict(self) -> list[dict]:
+        return [image.to_dict() for image in self.collection]

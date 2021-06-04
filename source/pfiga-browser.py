@@ -10,21 +10,18 @@ import os
 from argparse import ArgumentParser
 from dirinfo import DirectoryInfo
 from templates import Image, ImageCollection, TemplateEngine
-argparser = ArgumentParser()
 
 
 def main(args):
     # generate list of folder (path) to generate indexes from
     dirinfo = DirectoryInfo(args.path)
-    paths = dirinfo.recurse_dirs()
     temp_engine = TemplateEngine()
 
     # for each folder:
-    # - generate index with small/large version and path for each image
-    # - write index to a file in folder
-    for path in paths:
-        collection = ImageCollection()
+    for path in dirinfo.recurse_dirs():
+        collection = ImageCollection(exts=[".png", ".odg", ".svg"])
         for file in os.listdir(path):
+            # - generate index with small/large version and path for each image
             if not os.path.isdir(os.path.join(path, file)):
                 collection.add(Image(
                     name=str(file),
@@ -34,6 +31,8 @@ def main(args):
                         "large": 600
                     }
                 ))
+
+        # - write index to a file in folder
         temp_engine.render_readme(path, images=collection.to_dict())
 
         # write master index to file in root folder
@@ -41,6 +40,7 @@ def main(args):
 
 
 if __name__ == "__main__":
+    argparser = ArgumentParser()
     argparser.add_argument("path")
     args = argparser.parse_args()
     main(args)

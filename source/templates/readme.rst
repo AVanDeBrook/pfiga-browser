@@ -4,7 +4,6 @@
 Below are all the graphics in this folder:
 
 {% for image in images %}
-
 {{ image.name }}: {{ image.description }}
 
 {{ image.name }}: small
@@ -16,5 +15,4 @@ Below are all the graphics in this folder:
 
 .. image:: {{ image.name }}
    :width: {{ image.width.large }}
-
 {% endfor %}
