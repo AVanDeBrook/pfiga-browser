@@ -10,7 +10,6 @@ from pathlib import Path
 from argparse import ArgumentParser
 from parsers import IndexParser
 from directorywalker import DirectoryWalker
-from template import TemplateEngine
 
 
 def main(args):

@@ -5,8 +5,7 @@ from typing import List
 from docutils.parsers.rst import Parser, Directive, directives
 from docutils.frontend import OptionParser
 from docutils.utils import new_document
-from docutils.nodes import document, NodeVisitor, Node, reference, definition, General, Element
-from sphinx import addnodes
+from docutils.nodes import document, NodeVisitor, Node, General, Element
 
 
 class directory(General, Element):
