@@ -1,5 +1,11 @@
-**/__pycache__
-__pycache__
+# VSCode workspace config
+.vscode
+**/.vscode
 
-**/*.pyc
+# Python cache folders
+__pycache__
+**/__pycache__
+
+# Python cache files
 *.pyc
+**/*.pyc

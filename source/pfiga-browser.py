@@ -8,35 +8,20 @@ Notes:
 """
 import os
 from argparse import ArgumentParser
-from dirinfo import DirectoryInfo
-from templates import Image, ImageCollection, TemplateEngine
+from directorywalker import DirectoryWalker
+from template import TemplateEngine
 
 
 def main(args):
-    # generate list of folder (path) to generate indexes from
-    dirinfo = DirectoryInfo(args.path)
-    temp_engine = TemplateEngine()
+    # generate list of paths with first and second level readme files from root (passed by user through CLI)
+    scanner = DirectoryWalker(args.path)
+    scanned_paths = scanner.recurse_dirs()
+    images = scanner.find_all_images(
+        scanned_paths, exts=[".png", ".svg", ".odg"])
 
-    # for each folder:
-    for path in dirinfo.recurse_dirs():
-        collection = ImageCollection(exts=[".png", ".odg", ".svg"])
-        for file in os.listdir(path):
-            # - generate index with small/large version and path for each image
-            if not os.path.isdir(os.path.join(path, file)):
-                collection.add(Image(
-                    name=str(file),
-                    description="Add description here.",
-                    width={
-                        "small": 300,
-                        "large": 600
-                    }
-                ))
+    print(images)
 
-        # - write index to a file in folder
-        temp_engine.render_readme(path, images=collection.to_dict())
-
-        # write master index to file in root folder
-        # write build scripts to parent folder
+    # write build scripts to parent folder
 
 
 if __name__ == "__main__":
