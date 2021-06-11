@@ -10,5 +10,5 @@ File browser for the pfiga system
    :maxdepth: 2
    :caption: Contents:
 
-   1pj/01readme
-   4gr/01readme
+   1pj/01readme.rst
+   4gr/01readme.rst
