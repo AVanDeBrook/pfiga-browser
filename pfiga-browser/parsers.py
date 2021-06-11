@@ -2,17 +2,17 @@
 
 from pathlib import Path
 from typing import List
-from docutils.parsers.rst import Parser, Directive, directives
-from docutils.frontend import OptionParser
+from docutils import nodes, frontend
+from docutils.parsers import rst
 from docutils.utils import new_document
-from docutils.nodes import document, NodeVisitor, Node, General, Element
+from docutils.parsers.rst import directives
 
 
-class directory(General, Element):
+class directory(nodes.General, nodes.Element):
     pass
 
 
-class TocTree(Directive):
+class TocTree(rst.Directive):
     """ Trimmed version of Sphinx's TocTree reST directive """
     has_content = True
     required_arguments = 0
@@ -23,69 +23,74 @@ class TocTree(Directive):
         "caption": directives.unchanged_required
     }
 
-    def run(self) -> List[Node]:
+    def run(self) -> List[nodes.Node]:
         self.assert_has_content()
-        nodelist: List[Node] = []
+        nodelist: List[nodes.Node] = []
 
         for entry in self.content:
             dir_node = directory(rawtext=entry)
-            dir_node["fullpath"] = str(Path(entry + ".rst").absolute())
+            dir_node["fullpath"] = str(Path(entry))
             nodelist.append(dir_node)
 
         return nodelist
 
 
 class RstParser(object):
-    path: Path = None
-    text: str = None
-    parser: Parser = None
-    rst_document = None
+    path: Path
+    text: str
+    parser: rst.Parser
+    rst_document: nodes.document
 
     def __init__(self, path: Path, text: str):
         directives.register_directive("toctree", TocTree)
 
         self.path = path
         self.text = text
-
-        self.parser = Parser()
+        self.parser = rst.Parser()
 
         self.rst_document = new_document(
-            str(path.absolute()), settings=OptionParser(components=(Parser,)).get_default_values())
+            str(path.absolute()), settings=frontend.OptionParser(components=(rst.Parser,)).get_default_values())
 
-    def parse(self) -> document:
+    def parse(self) -> nodes.document:
         self.parser.parse(self.text, self.rst_document)
         return self.rst_document
 
 
-class RstNodeVisitor(NodeVisitor):
-    def __init__(self, document, pathlist):
+class RstNodeVisitor(nodes.NodeVisitor):
+    pathlist: List[Path]
+    parent: Path
+
+    def __init__(self, document: nodes.document, parent: Path, pathlist: List[Path]):
         self.pathlist = pathlist
+        self.parent = parent
         super(RstNodeVisitor, self).__init__(document)
 
-    def dispatch_visit(self, node):
+    def dispatch_visit(self, node: nodes.Node) -> None:
         if isinstance(node, directory):
-            self.pathlist.append(Path(node["fullpath"]))
+            self.pathlist.append(self.parent.joinpath(node["fullpath"]))
 
-    def unknown_visit(self, node: Node) -> None:
+    def dispatch_departure(self, node: nodes.Node) -> None:
+        pass
+
+    def unknown_visit(self, node: nodes.Node) -> None:
         pass
 
 
-class IndexParser(object):
-    file = None
-    text = None
+class ReadmeDirectoryParser(object):
+    path: Path
+    content: str
 
-    def __init__(self, file: Path):
-        if file.exists():
-            self.file = file
-
-            with file.open("r") as f_index:
-                self.text = f_index.read()
-                f_index.close()
+    def __init__(self, path: Path):
+        if path.exists() and path.is_file():
+            self.path = path
+            with path.open("r") as f_readme:
+                self.content = f_readme.read()
 
     def parse(self) -> List[Path]:
-        index_paths: List[Path] = []
+        parsed_paths: List[Path] = []
 
-        parsed_rst = RstParser(self.file, self.text).parse()
-        parsed_rst.walk(RstNodeVisitor(parsed_rst, index_paths))
+        parsed_rst = RstParser(self.path, self.content).parse()
+        parsed_rst.walk(RstNodeVisitor(
+            parsed_rst, self.path.parent, parsed_paths))
 
-        return index_paths
+        return parsed_paths

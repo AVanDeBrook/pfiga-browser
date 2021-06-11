@@ -6,22 +6,36 @@ Notes:
   * master index
   * build scripts
 """
+from typing import List
 from pathlib import Path
 from argparse import ArgumentParser
-from parsers import IndexParser
+from parsers import ReadmeDirectoryParser
 from directorywalker import DirectoryWalker
 
 
 def main(args):
-    # generate list of paths with first and second level readme files, if they exist, from index (passed by user through CLI)
-    index = IndexParser(Path(args.index))
-    print(index.parse())
-    # scanner = DirectoryWalker(args.index)
-    # scanned_paths = scanner.recurse_dirs()
-    # images = scanner.find_all_images(
-    #     scanned_paths, exts=[".png", ".svg", ".odg"])
+    index: Path = Path(args.index).absolute()
+    index_parser: ReadmeDirectoryParser
+    first_level_readme_list: List[Path] = []
+    second_level_readme_list: List[Path] = []
 
-    # print(images)
+    print("index: ", index)
+
+    if index.exists() and index.is_file():
+        index_parser = ReadmeDirectoryParser(index)
+    else:
+        raise FileNotFoundError()
+
+    first_level_readme_list = index_parser.parse()
+
+    print("first level readmes: ", first_level_readme_list)
+
+    for path in first_level_readme_list:
+        first_level_parser: ReadmeDirectoryParser = ReadmeDirectoryParser(path)
+        for second_level_path in first_level_parser.parse():
+            second_level_readme_list.append(second_level_path)
+
+    print("second level readmes: ", second_level_readme_list)
 
     # write build scripts to parent folder
 

@@ -1,21 +1,23 @@
 #!/usr/bin/env python
 
+from typing import Dict, Union, List
 from pathlib import Path
+from copy import deepcopy
 
 
 class Image(object):
-    name = ""
-    description = ""
-    width = {}
+    name: str
+    description: str
+    width: Dict[str, int]
 
-    def __init__(self, name: str = None, description: str = "Add description here.", width: dict = {"small": 300, "large": 600}):
-        if name is not None:
+    def __init__(self, name: str = None, description: str = "Add description here.", width: Dict[str, int] = {"small": 300, "large": 600}):
+        if name:
             self.name = name
 
         self.description = description
         self.width = width
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> Dict[str, Union[str, Dict[str, int]]]:
         return {
             "name": self.name,
             "description": self.description,
@@ -33,21 +35,24 @@ class Image(object):
 
 
 class ImageCollection(object):
-    collection = []
+    collection: List[Image]
 
-    def __init__(self, collection: list[Image] = None):
-        if collection is not None:
+    def __init__(self, collection: List[Image] = []):
+        if collection:
             self.collection = collection
         else:
             self.collection = []
 
-    def add(self, image: Image):
+    def add(self, image: Image) -> None:
         self.collection.append(image)
+
+    def copy(self) -> "ImageCollection":
+        return deepcopy(self)
 
     def is_empty(self) -> bool:
         return len(self.collection) == 0
 
-    def to_dict(self) -> list[dict]:
+    def to_dict(self) -> List[Dict[str, Union[str, Dict[str, int]]]]:
         return [image.to_dict() for image in self.collection]
 
     def __repr__(self):
