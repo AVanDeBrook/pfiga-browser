@@ -1,21 +1,45 @@
 #!/usr/bin/env python
+# python level import
 from typing import List, Union, Dict
 from pathlib import Path
+# pfiga-browser level imports
 from imageinfo import ImageCollection, Image
 
 
 class DirectoryWalker(object):
-    scanned_paths: List[Path] = []
+    """
+    Responsible for all directory related manipulation, searching, etc.
+
+    Maintains a list of scanned paths i.e. all subpaths of the root path that the DirectoryWalker was initialized on.
+    """
+
+    scanned_paths: List[Path]
+    """
+    List of absolute file paths to directories found within the project(s) (specified in the project index)
+    """
+
     root: Path
+    """
+    The root directory that the walker is in charge of analyzing.
+    """
 
     def __init__(self, root: Union[Path, str]):
+        """
+        :param root: Top-most level of the director(y/ies) to walk through.
+        """
+
+        # if the root path is a string, make a path from it
         if not isinstance(root, Path):
             root = Path(root)
-        if root.is_dir():
+
+        # validate the directory/path
+        if root.exists() and root.is_dir():
             self.root = root
         else:
-            # TODO: create more specific error/exception object for this case?
+            # TODO create more specific error/exception object for this case?
             raise FileNotFoundError()
+
+        self.scanned_paths = []
 
     def recurse_dirs(self) -> List[Path]:
         """
@@ -24,6 +48,7 @@ class DirectoryWalker(object):
 
         :returns: List of all absolute file paths found within the specified root path.
         """
+
         self._recurse_dirs(self.root)
         return self.scanned_paths
 
@@ -62,6 +87,7 @@ class DirectoryWalker(object):
 
         :returns: List of absolute file paths to readme files.
         """
+
         readme_paths: List[Path] = []
 
         for path in self.scanned_paths:
@@ -87,13 +113,18 @@ class DirectoryWalker(object):
 
         :returns: A dictionary where each key (Path) is mapped to a collection of images (ImageCollection). Omits paths where no images were found.
         """
+
+        # make sure there is a list of directories to search
         if not self.scanned_paths:
             self.recurse_dirs()
 
-        collections = {}
+        collections: Dict[str, ImageCollection] = {}
 
+        # find all images in all the scanned paths and map each path to its associated collection of images
         for path in self.scanned_paths:
             collection = self.find_images_in_path(path, exts=exts)
+
+            # omit if no images were found
             if not collection.is_empty():
                 collections[str(path.absolute())] = collection.copy()
 
@@ -110,6 +141,8 @@ class DirectoryWalker(object):
 
         :returns: A collection of images (ImageCollection).
         """
+
+        # validate path
         if not path.exists():
             raise FileNotFoundError()
         if not path.is_dir():
@@ -117,13 +150,22 @@ class DirectoryWalker(object):
 
         collection = ImageCollection()
 
+        # check the extension of each file in the directory and add to the collection if it's one of the file types specified
         for item in path.iterdir():
             if item.is_file() and item.suffix in exts:
                 collection.add(Image(name=item.name))
 
         return collection
 
-    def _recurse_dirs(self, path: Path):
+    def _recurse_dirs(self, path: Path) -> None:
+        """
+        Recursively finds and adds all directories from the top level path until the end of all paths.
+        TODO Should probably add an optional maxdepth argument
+
+
+        :param path: 'root' path to start searching from
+        """
+
         subdirs = []
 
         print("[*] Scanning '%s'..." % (path.absolute()))
@@ -139,5 +181,10 @@ class DirectoryWalker(object):
 
 
 class PathNotADirectoryError(Exception):
+    """
+    Exception object that is raised when a given path is not a directory, but needs to be in order to ensure correct operation.
+    This should only be used in cases where a path being of a wrong type is fatal to program execution.
+    """
+
     def __init__(self):
         super(PathNotADirectoryError, self).__init__()

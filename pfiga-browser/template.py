@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-
-import os
+# python level imports
 from pathlib import PurePath
+# jinja level imports
 from jinja2 import Template, Environment, PackageLoader, select_autoescape
 
 
