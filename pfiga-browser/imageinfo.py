@@ -22,14 +22,14 @@ class Image(object):
     Description of the image. By default this is either "" or "Add description here.". Used primarily in second level readme files.
     """
 
-    width: Dict[str, int]
+    width: int
     """
     Small/large width of the image. Used for displaying thumbnails of the image in reST readme files.
 
     Defaults to 'small': 300 and 'large': 600.
     """
 
-    def __init__(self, name: str, description: str = "Add description here.", width: Dict[str, int] = {"small": 300, "large": 600}):
+    def __init__(self, name: str, description: str = "Add description here.", width: int = 300):
         """
         :param name: Required. Name of the image.
 
@@ -42,7 +42,7 @@ class Image(object):
         self.description = description
         self.width = width
 
-    def to_dict(self) -> Dict[str, Union[str, Dict[str, int]]]:
+    def to_dict(self) -> Dict[str, Union[str, int]]:
         """
         :returns: a dictionary version of the object. Each attribute of the class is represented as a key, value pair.
         """
@@ -53,7 +53,7 @@ class Image(object):
         }
 
     def __repr__(self) -> str:
-        return self.name
+        return str(self.to_dict())
 
     def __str__(self) -> str:
         return self.name
@@ -105,7 +105,25 @@ class ImageCollection(object):
 
         return len(self.collection) == 0
 
-    def to_dict(self) -> List[Dict[str, Union[str, Dict[str, int]]]]:
+    def find(self, name: str) -> Image:
+        """
+        Finds an image with a specific name in the collection. Raises an ItemNotFoundError when an
+        image with a matching name is not found in the collection.
+
+
+        :param name: Name of the image to search for (see `name` field in Image class).
+
+        :returns: Reference to the image object with a matching name.
+
+        :raises: ItemNotFoundError when an Image with a matching name is not present in the collection.
+        """
+
+        for image in self.collection:
+            if image.name == name:
+                return image
+        raise ItemNotFoundError
+
+    def to_dict(self) -> List[Dict[str, Union[str, int]]]:
         """
         :returns: a list of dictionary representations of the images in the collection. See Image.to_dict()
         """
@@ -113,7 +131,12 @@ class ImageCollection(object):
         return [image.to_dict() for image in self.collection]
 
     def __repr__(self) -> str:
-        return str([str(image) for image in self.collection])
+        return str(self.to_dict())
 
     def __str__(self) -> str:
         return str([str(image) for image in self.collection])
+
+
+class ItemNotFoundError(Exception):
+    def __init__(self, *args: object):
+        super(ItemNotFoundError, self).__init__(args)

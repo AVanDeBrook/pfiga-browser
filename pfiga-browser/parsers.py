@@ -1,12 +1,14 @@
 #!/usr/bin/env python
 # python level imports
 from pathlib import Path
-from typing import List
+from typing import List, Dict, Tuple, Any
 # docutils level imports
 from docutils import nodes, frontend
 from docutils.parsers import rst
 from docutils.utils import new_document
 from docutils.parsers.rst import directives
+# pfiga-browser level imports
+from imageinfo import ImageCollection, Image, ItemNotFoundError
 
 
 class directory(nodes.General, nodes.Element):
@@ -104,7 +106,7 @@ class RstParser(object):
         return self.rst_document
 
 
-class RstNodeVisitor(nodes.NodeVisitor):
+class TocTreeProcessor(nodes.NodeVisitor):
     """
     Extension of the docutils.nodes.NodeVisitor class that overrides the dispatch_visit function
     to add process the director(y/ies) that have been parsed from the "toctree" directive.
@@ -131,7 +133,7 @@ class RstNodeVisitor(nodes.NodeVisitor):
 
         self.pathlist = pathlist
         self.parent = parent
-        super(RstNodeVisitor, self).__init__(document)
+        super(TocTreeProcessor, self).__init__(document)
 
     def dispatch_visit(self, node: nodes.Node) -> None:
         """
@@ -158,10 +160,111 @@ class RstNodeVisitor(nodes.NodeVisitor):
 
         pass
 
+    def unknown_departure(self, node: nodes.Node) -> None:
+        """
+        Forcing this function to do nothing to avoid duplicate results or output.
+        """
 
-class ReadmeDirectoryParser(object):
+        pass
+
+
+class SecondLevelProcessor(nodes.NodeVisitor):
     """
-    Generic class for parsing readme locations from "toctree" directives in reST documents.
+    NodeVisitor implementation used to find image directives and descriptions and process them
+    into Image and ImageCollection object(s) where applicable.
+    """
+
+    image_collection: ImageCollection
+    """
+    Collection of images (found/described in the readme).
+    """
+
+    description_map: Dict[str, str]
+    """
+    Map of image names/uris to descriptions.
+
+    Needs to be parsed like this because image descriptions can be written before the actual image directive.
+    The easiest and most sensical way to approach the problem is to store everything separately and combine
+    everything together at the end once everything has been processed.
+    """
+
+    def __init__(self, document: nodes.document, collection: ImageCollection, description_map: Dict[str, str]):
+        """
+        :param document: AST to walk through.
+
+        :param collection: image collection to store processed images to.
+
+        :param description_map: dictionary to store maps between image names and descriptions.
+        """
+
+        self.image_collection = collection
+        self.description_map = description_map
+        super(SecondLevelProcessor, self).__init__(document)
+
+    def parse_image(self, node: nodes.Node) -> Image:
+        """
+        Process image uri and width from the AST into an Image object.
+
+
+        :param node: Current node.
+
+        :returns: Image
+        """
+
+        return Image(name=node["uri"], width=node["width"])
+
+    def parse_description(self, node: nodes.Node) -> Tuple[str, str]:
+        """
+        Get image name and description from AST and store into a dictionary to finish filling out the image metadata later.
+
+
+        :param node: Current node.
+        """
+
+        name_node = node.next_node()
+
+        return (name_node.astext(), node.astext())
+
+    def dispatch_visit(self, node: nodes.Node) -> None:
+        """
+        Analyzes and processes images and description into their data structures.
+
+
+        :param node: Current node.
+        """
+
+        # if node is an image, parse and store into collection
+        if isinstance(node, nodes.image):
+            self.image_collection.add(self.parse_image(node))
+        # if node is a paragraph and next node is bold (strong aka image name) and store into dictionary
+        elif isinstance(node, nodes.paragraph) and isinstance(node.next_node(), nodes.strong):
+            self.description_map.update([self.parse_description(node)])
+
+    def dispatch_departure(self, node: nodes.Node) -> None:
+        """
+        Forcing this function to do nothing to avoid duplicate results or output.
+        """
+
+        pass
+
+    def unknown_visit(self, node: nodes.Node) -> None:
+        """
+        Forcing this function to do nothing to avoid duplicate results or output.
+        """
+
+        pass
+
+    def unknown_departure(self, node: nodes.Node) -> None:
+        """
+        Forcing this function to do nothing to avoid duplicate results or output.
+        """
+
+        pass
+
+
+class ReadmeParser(object):
+    """
+    Abstract class for parsing and process readme files in a project.
     """
 
     path: Path
@@ -186,6 +289,24 @@ class ReadmeDirectoryParser(object):
             with path.open("r") as f_readme:
                 self.content = f_readme.read()
 
+    def parse(self) -> Any:
+        raise NotImplementedError
+
+
+class ReadmeDirectoryParser(ReadmeParser):
+    """
+    Class for parsing readme locations from "toctree" directives in reST documents. Generally
+    this class is used for parsing index and first level readme files. These files describe the same
+    things, just at different levels of the project.
+    """
+
+    def __init__(self, path: Path):
+        """
+        :param path: Path to project index or first level readme file.
+        """
+
+        super(ReadmeDirectoryParser, self).__init__(path)
+
     def parse(self) -> List[Path]:
         """
         Parses the reST document and returns the directories listed within it.
@@ -199,7 +320,50 @@ class ReadmeDirectoryParser(object):
         # instantiate a parser and parse the readme to get an AST
         parsed_rst = RstParser(self.path, self.content).parse()
         # walk through the AST and process directory nodes (absolute paths sotred in parsed_paths)
-        parsed_rst.walk(RstNodeVisitor(
+        parsed_rst.walk(TocTreeProcessor(
             parsed_rst, self.path.parent, parsed_paths))
 
         return parsed_paths
+
+
+class ReadmeImageParser(ReadmeParser):
+    """
+    Class for parsing directory and image info from reST files.
+
+    Generally this class is used for processing second level readme files into a format that the
+    program can analyze and perform operations on as needed.
+    """
+
+    def __init__(self, path: Path):
+        """
+        :param path: Path to second level readme file (describes directory/images in directory).
+        """
+
+        super(ReadmeImageParser, self).__init__(path)
+
+    def parse(self) -> ImageCollection:
+        """
+        Parses all image directives and descriptions in the readme file and returns an ImageCollection object.
+
+
+        :returns: A collection of images present and described in the second level readme file specified.
+        """
+
+        image_collection: ImageCollection = ImageCollection()
+        description_map: Dict[str, str] = {}
+
+        # instantiate a parser and parse the readme to get an AST
+        parsed_rst = RstParser(self.path, self.content).parse()
+        # walk through the AST and process the directives and descriptions
+        parsed_rst.walk(SecondLevelProcessor(
+            parsed_rst, image_collection, description_map))
+
+        # set descriptions in the Image objects to what was found in the readme
+        for name, description in description_map.items():
+            try:
+                image = image_collection.find(name)
+                image.description = description
+            except ItemNotFoundError:
+                continue
+
+        return image_collection
