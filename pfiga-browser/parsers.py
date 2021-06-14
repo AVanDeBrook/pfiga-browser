@@ -288,6 +288,8 @@ class ReadmeParser(object):
             # read and store contents
             with path.open("r") as f_readme:
                 self.content = f_readme.read()
+        else:
+            raise FileNotFoundError()
 
     def parse(self) -> Any:
         raise NotImplementedError
