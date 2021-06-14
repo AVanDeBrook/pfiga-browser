@@ -49,8 +49,9 @@ class DirectoryWalker(object):
         :returns: List of all absolute file paths found within the specified root path.
         """
 
+        self.scanned_paths.append(self.root)
         self._recurse_dirs(self.root)
-        return self.scanned_paths
+        return self.scanned_paths.sort()
 
     def first_level_paths(self, name: str) -> List[Path]:
         """
@@ -85,19 +86,20 @@ class DirectoryWalker(object):
 
         :param name: Name of the file to search for.
 
-        :returns: List of absolute file paths to readme files.
+        :returns: Sorted list of absolute paths to readme files.
         """
+
+        if not self.scanned_paths:
+            self.recurse_dirs()
 
         readme_paths: List[Path] = []
 
         for path in self.scanned_paths:
-            print("[*] Searching for readme files in '%s'..." % (path))
-
             for item in path.iterdir():
-                if name == item.name and item.is_file():
-                    readme_paths.append(path.absolute())
-                    print("\033[32m[+] Found readme: level='%s' name='%s'\033[m" %
-                          (level, str(path.absolute())))
+                if item.name == name and item.is_file():
+                    readme_paths.append(item)
+
+        readme_paths.sort()
 
         return readme_paths
 
@@ -167,8 +169,6 @@ class DirectoryWalker(object):
         """
 
         subdirs = []
-
-        print("[*] Scanning '%s'..." % (path.absolute()))
 
         for item in path.iterdir():
             if item.is_dir():

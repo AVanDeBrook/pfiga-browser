@@ -14,11 +14,8 @@ from error import ExitCode
 def main(args) -> int:
     index: Path = Path(args.index).absolute()
     index_parser: ReadmeDirectoryParser
-    first_level_readme_list: List[Path] = []
-    second_level_readme_list: List[Path] = []
-    image_collection_map: Dict[Path, ImageCollection] = {}
 
-    # print("index: ", index)
+    print("index: ", index, end="\n\n")
 
     # validate index file
     try:
@@ -31,10 +28,14 @@ def main(args) -> int:
         return ExitCode.UNKOWN
 
     # parse first level readme paths from index file
-    first_level_readme_list = index_parser.parse()
+    first_level_readme_list: List[Path] = index_parser.parse()
 
-    # print("first level readmes: ", first_level_readme_list)
+    print("first level readmes:")
+    for path in first_level_readme_list:
+        print(path)
+    print()
 
+    second_level_readme_list: List[Path] = []
     # parse second level readme paths from each of the first level readmes
     for path in first_level_readme_list:
         try:
@@ -47,8 +48,12 @@ def main(args) -> int:
             print("Error processing first level readme: File '%s' not found" % (path))
             return ExitCode.FILENOTFOUND
 
-    # print("second level readmes: ", second_level_readme_list)
+    print("second level readmes:")
+    for path in second_level_readme_list:
+        print(path)
+    print()
 
+    image_collection_map: Dict[Path, ImageCollection] = {}
     # process each second level readme and store image data found in the readme
     for path in second_level_readme_list:
         try:
@@ -64,6 +69,33 @@ def main(args) -> int:
     # print("image collection map: ", image_collection_map)
 
     # TODO directorywalker.py, parsers.py, template.py: search for first and second level readme files that aren't being tracked and update relevant files
+    all_first_level_readmes: List[Path] = []
+    all_second_level_readmes: List[Path] = []
+
+    # scan paths from top level (retrieved from index) for any untracked first and second level readmes
+    for path in first_level_readme_list:
+        directory_walkler = DirectoryWalker(path.parent)
+
+        # TODO config.py: update first level readme name to be user configurable
+        all_first_level_readmes.extend(
+            directory_walkler.first_level_paths("01readme.rst"))
+
+        # TODO config.py: update second level readme name to be user configurable
+        all_second_level_readmes.extend(
+            directory_walkler.second_level_paths("02readme.rst"))
+
+    # TODO add user options to automatically update untracked files (does this by default at the moment)
+
+    for path in all_first_level_readmes:
+        if path not in first_level_readme_list:
+            print("found untracked first level readme: '%s'" % (path))
+    print()
+
+    for path in all_second_level_readmes:
+        if path not in second_level_readme_list:
+            print("found untracked second level readme: '%s'" % (path))
+    print()
+
     # TODO directorywalker.py, parsers.py, template.py: search directories for images that aren't being tracked by existing second level readmes and update or create one if it doesn't exist
     return ExitCode.NORMAL
 
@@ -74,4 +106,4 @@ if __name__ == "__main__":
     argparser = ArgumentParser()
     argparser.add_argument("index")
     args = argparser.parse_args()
-    main(args)
+    exit(main(args))
