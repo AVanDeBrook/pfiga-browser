@@ -34,6 +34,51 @@ $ pfiga-browser test/test_file_browser_v2/pfiga/index.rst
 ```
 **Note**: Depending on how it was built and installed, `pfiga-browser` may need to be run as `pfiga-browser/pfiga-browser.py` from the root of the git repo.
 
+# To-Do List
+* See TODO statements in code base for more specifics
+* Command Line Interface Arguments:
+  * Add CLI documentation
+  * Add error handling for too many, too few, or incorrect arguments
+  * Add optional arguments:
+    * Add optional arguments here
+* Configuration:
+  * Create formal configuration format/syntax (probably using YAML)
+  * Add configuration module for processing files, options, etc.
+  * Add template for config files (jinja, yaml)
+  * Add default config file
+* Templates:
+  * Finish templates
+  * Finish module to render and write templates:
+    * Images
+    * Indexes
+* Logging/Error Handling:
+  * Add prettier console logging
+  * Add better error handling w/ more verbose output:
+    * File not found
+    * Name errors
+    * Type errors
+    * File instead of directory
+    * Directory instead of file
+    * Invalid path
+    * Inaccessible file
+  * Stronger typing and stronger type enforcement
+* Documentation:
+  * Parser explanations and methodologies
+    * Sphinx:
+      * Mediocre core code documentation
+      * Directive implementations are unusable outside of sphinx
+      * Incompatible with docutils (despite being derived from them)
+      * Explain modifications to toctree implementation
+      * Explain how directive is processed (from documents to AST to directory strings)
+      * Explain how tree-walker and parser are implemented, how they work together, etc.
+    * Docutils:
+      * Horrendous dev documentation (couldn't figure out how to use the Parser, NodeVisitor without StackOverflow; source code is a better reference than the official docs)
+      * Explain NodeVisitor (and methods within)
+      * Explain Parser (implementation, extension, wrappers, return values, AST, etc.)
+      * Explain directives (concepts, implementation, processing, analysis, required args, optional args, content, etc.)
+  * License(s):
+    * Review dependency requirements for licenses (if any)
+
 # Disclaimers, Acknowledgements, etc.
 This project is still in its infancy, so there are many functionalities that are intended but not yet present as well as debugging messages and object dumps.
 
