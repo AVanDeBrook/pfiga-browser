@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+"""Main file for the project."""
 # core level imports
 from typing import List, Dict
 from pathlib import Path
@@ -12,6 +12,16 @@ from error import ExitCode
 
 
 def main(args) -> int:
+    """
+    Entry point for the pfiga-browser program.
+
+    This is the high-level implementation of the project and is responsible for calling the lower level
+    functions such as parsers, lexers, data structures, etc.
+
+    :param args: CLI arugments parsed by the argument parser.
+
+    :returns: An exit code specifying what, if anything, went wrong. See `error.py`.
+    """
     index: Path = Path(args.index).absolute()
     index_parser: ReadmeDirectoryParser
 
@@ -40,8 +50,7 @@ def main(args) -> int:
     for path in first_level_readme_list:
         try:
             # need a new parser object each time so it operates on and crafts directories correctly
-            first_level_parser: ReadmeDirectoryParser = ReadmeDirectoryParser(
-                path)
+            first_level_parser: ReadmeDirectoryParser = ReadmeDirectoryParser(path)
             # add all second level readme paths to collection
             second_level_readme_list.extend(first_level_parser.parse())
         except FileNotFoundError:
@@ -66,7 +75,10 @@ def main(args) -> int:
             print("Error processing second level readme: File '%s' not found" % (path))
             return ExitCode.FILENOTFOUND
 
-    # print("image collection map: ", image_collection_map)
+    print("image collection map:")
+    for path, collection in image_collection_map.items():
+        print("%s: %s" % (path, collection))
+    print()
 
     # TODO directorywalker.py, parsers.py, template.py: search for first and second level readme files that aren't being tracked and update relevant files
     all_first_level_readmes: List[Path] = []
