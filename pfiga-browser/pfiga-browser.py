@@ -7,7 +7,7 @@ from argparse import ArgumentParser
 # pfiga-browser level imports
 from parsers import ReadmeDirectoryParser, ReadmeImageParser
 from directorywalker import DirectoryWalker
-from imageinfo import ImageCollection
+from imageinfo import ImageCollection, verify_image
 from error import ExitCode
 
 
@@ -75,6 +75,20 @@ def main(args) -> int:
             print("Error processing second level readme: File '%s' not found" % (path))
             return ExitCode.FILENOTFOUND
 
+    image_readme_list: List[Path] = []
+
+    for path, collection in image_collection_map.items():
+        image_readme_list.extend([path / str(image) for image in collection.collection])
+
+
+    # verify images found in the file are present on disk
+    for path, collection in image_collection_map.items():
+        for image in collection.collection:
+            image_valid = verify_image(image, path)
+            if not image_valid:
+                image_readme_list.remove(path / str(image))
+                print("could not find image: '%s' on path: '%s'" % (image, path))
+
     print("image collection map:")
     for path, collection in image_collection_map.items():
         print("%s: %s" % (path, collection))
@@ -83,18 +97,21 @@ def main(args) -> int:
     # TODO directorywalker.py, parsers.py, template.py: search for first and second level readme files that aren't being tracked and update relevant files
     all_first_level_readmes: List[Path] = []
     all_second_level_readmes: List[Path] = []
+    all_images: List[Path] = []
 
     # scan paths from top level (retrieved from index) for any untracked first and second level readmes
     for path in first_level_readme_list:
         directory_walkler = DirectoryWalker(path.parent)
 
         # TODO config.py: update first level readme name to be user configurable
-        all_first_level_readmes.extend(
-            directory_walkler.first_level_paths("01readme.rst"))
+        all_first_level_readmes.extend(directory_walkler.first_level_paths("01readme.rst"))
 
         # TODO config.py: update second level readme name to be user configurable
-        all_second_level_readmes.extend(
-            directory_walkler.second_level_paths("02readme.rst"))
+        all_second_level_readmes.extend(directory_walkler.second_level_paths("02readme.rst"))
+
+        # TODO config.py: update image suffixes to be user configurable
+        all_images.extend(directory_walkler.find_all_images(exts=[".png", ".odg", ".svg"]))
+
 
     # TODO add user options to automatically update untracked files (does this by default at the moment)
 
@@ -108,7 +125,15 @@ def main(args) -> int:
             print("found untracked second level readme: '%s'" % (path))
     print()
 
+    for image in all_images:
+        if image not in image_readme_list:
+            print("found untracked image: '%s'" % (image))
+    print()
+
+    # TODO template.py, directorywalker.py: fill out image template and update second level readmes
+
     # TODO directorywalker.py, parsers.py, template.py: search directories for images that aren't being tracked by existing second level readmes and update or create one if it doesn't exist
+
     return ExitCode.NORMAL
 
 
@@ -118,4 +143,9 @@ if __name__ == "__main__":
     argparser = ArgumentParser()
     argparser.add_argument("index")
     args = argparser.parse_args()
-    exit(main(args))
+
+    exit_code = main(args)
+
+    print("program exited with status: '%s'" % (exit_code.name))
+
+    exit(exit_code.value)

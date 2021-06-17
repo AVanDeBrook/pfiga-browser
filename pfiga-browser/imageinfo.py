@@ -14,6 +14,8 @@ class Image(object):
 
     `name`: Name of the image. Usually the name of the file that the image is stored in.
 
+    `uri`: URI of the image. Almost always the filename, as it is in the filesystem.
+
     `description`: Description of the image. By default this is either "" or "Add description here.". Used primarily in second level readme files.
 
     `width`: Width of the image thumbnail (optional argument in reST `image` directives)
@@ -21,21 +23,26 @@ class Image(object):
 
     name: str
 
+    uri: str
+
     description: str
 
     width: int
 
-    def __init__(self, name: str, description: str = "Add description here.", width: int = 300):
+    def __init__(self, uri: str, name: str = "", description: str = "Add description here.", width: int = 300):
         """
         Initialize with name, description (optional), and width (optional).
 
-        :param name: Required. Name of the image.
+        :param uri: Required. URI of the image (file name).
+
+        :param name: Optional. Name of the image.
 
         :param description: Optional. Image description.
 
         :param width: Optional. Small/large pixel values for displaying image thumbnails.
         """
         self.name = name
+        self.uri = uri
         self.description = description
         self.width = width
 
@@ -47,6 +54,7 @@ class Image(object):
         """
         return {
             "name": self.name,
+            "uri": self.uri,
             "description": self.description,
             "width": self.width
         }
@@ -57,7 +65,7 @@ class Image(object):
 
     def __str__(self) -> str:
         """Return name of the image as a string representation of the class."""
-        return self.name
+        return self.uri
 
 
 class ImageCollection(object):
@@ -139,6 +147,23 @@ class ImageCollection(object):
     def __str__(self) -> str:
         """Return a list of string representations of the images in the collection."""
         return str([str(image) for image in self.collection])
+
+def verify_image(image: Image, path: Path) -> bool:
+    """
+    Return true if `image` URI is present in `path`, false otherwise.
+
+    :param image: Image object containing all necessary information about the image to check for.
+
+    :param path: Path to iterate through and check for `image`.
+
+    :returns: True if `image` is in `path`, False otherwise.
+    """
+    # if file name and image uri match, then image is valid
+    for item in path.iterdir():
+        # possible on some systems to have a folder name that could match an URI
+        if item.is_file() and image.uri == item.name:
+            return True
+    return False
 
 
 class ItemNotFoundError(Exception):

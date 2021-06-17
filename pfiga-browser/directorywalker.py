@@ -3,8 +3,6 @@
 # python level import
 from typing import List, Union, Dict
 from pathlib import Path
-# pfiga-browser level imports
-from imageinfo import ImageCollection, Image
 
 
 class DirectoryWalker(object):
@@ -97,7 +95,7 @@ class DirectoryWalker(object):
 
         return readme_paths
 
-    def find_all_images(self, exts: List[str] = [".jpg", ".png", ".svg"]) -> Dict[str, ImageCollection]:
+    def find_all_images(self, exts: List[str] = [".jpg", ".png", ".svg"]) -> List[Path]:
         """
         Find all images in the list of scanned paths. Populates the list of scanned paths if it hasn't been already.
 
@@ -107,25 +105,25 @@ class DirectoryWalker(object):
 
         :param exts: (optional) Image extensions to search for.
 
-        :returns: A dictionary where each key (Path) is mapped to a collection of images (ImageCollection). Omits paths where no images were found.
+        :returns: A list of paths to images found within the `root` directory.
         """
         # make sure there is a list of directories to search
         if not self.scanned_paths:
             self.recurse_dirs() # TODO raise exception instead of calling `recurse_dirs`
 
-        collections: Dict[str, ImageCollection] = {}
+        paths: List[Path] = []
 
         # find all images in all the scanned paths and map each path to its associated collection of images
         for path in self.scanned_paths:
             collection = self.find_images_in_path(path, exts=exts)
 
             # omit if no images were found
-            if not collection.is_empty():
-                collections[str(path.absolute())] = collection.copy()
+            if collection:
+                paths.extend(collection)
 
-        return collections
+        return paths
 
-    def find_images_in_path(self, path: Path, exts: List[str] = [".jpg", ".png", ".svg"]) -> ImageCollection:
+    def find_images_in_path(self, path: Path, exts: List[str] = [".jpg", ".png", ".svg"]) -> List[Path]:
         """
         Find all images in `path` matching `exts`.
 
@@ -133,7 +131,7 @@ class DirectoryWalker(object):
 
         :param exts: (optional) Image extensions to search for. By default: '.jpg', '.png', '.svg'
 
-        :returns: A collection of images (ImageCollection).
+        :returns: A list of paths to images found in `path`.
 
         :raises: FileNotFoundError if `path` does not exist on the system. PathNotADirectoryError if `path` is not a directory.
         """
@@ -143,12 +141,12 @@ class DirectoryWalker(object):
         if not path.is_dir():
             raise PathNotADirectoryError()
 
-        collection = ImageCollection()
+        collection: List[Path] = []
 
         # check the extension of each file in the directory and add to the collection if it's one of the file types specified
         for item in path.iterdir():
             if item.is_file() and item.suffix in exts:
-                collection.add(Image(name=item.name))
+                collection.append(item.absolute())
 
         return collection
 

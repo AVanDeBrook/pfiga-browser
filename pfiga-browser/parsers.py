@@ -218,7 +218,7 @@ class SecondLevelProcessor(nodes.NodeVisitor):
 
         :returns: Image
         """
-        return Image(name=node["uri"], width=node["width"])
+        return Image(uri=node["uri"], width=node["width"])
 
     def parse_description(self, node: nodes.Node) -> Tuple[str, str]:
         """
@@ -355,6 +355,7 @@ class ReadmeImageParser(ReadmeParser):
         for name, description in description_map.items():
             try:
                 image = image_collection.find(name)
+                image.name = name
                 image.description = description
             except ItemNotFoundError:
                 continue
