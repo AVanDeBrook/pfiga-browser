@@ -41,7 +41,8 @@ class Image(object):
 
         :param width: Optional. Small/large pixel values for displaying image thumbnails.
         """
-        self.name = name
+        if name == "":
+            self.name = uri
         self.uri = uri
         self.description = description
         self.width = width

@@ -7,8 +7,9 @@ from argparse import ArgumentParser
 # pfiga-browser level imports
 from parsers import ReadmeDirectoryParser, ReadmeImageParser
 from directorywalker import DirectoryWalker
-from imageinfo import ImageCollection, verify_image
+from imageinfo import Image, ImageCollection, verify_image
 from error import ExitCode
+from template import TemplateEngine
 
 
 def main(args) -> int:
@@ -24,6 +25,7 @@ def main(args) -> int:
     """
     index: Path = Path(args.index).absolute()
     index_parser: ReadmeDirectoryParser
+    template_engine: TemplateEngine = TemplateEngine()
 
     print("index: ", index, end="\n\n")
 
@@ -125,14 +127,25 @@ def main(args) -> int:
             print("found untracked second level readme: '%s'" % (path))
     print()
 
+    # TODO directorywalker.py, template.py: search directories for images that aren't being tracked by existing second level readmes and update or create one if it doesn't exist
+    untracked_images: Dict[Path, List[Image]] = {}
+
     for image in all_images:
         if image not in image_readme_list:
             print("found untracked image: '%s'" % (image))
     print()
 
-    # TODO template.py, directorywalker.py: fill out image template and update second level readmes
+    for image in all_images:
+        if image not in image_readme_list:
+            if image.parent in untracked_images.keys():
+                untracked_images[image.parent].append(Image(uri=image.name))
+            else:
+                untracked_images[image.parent] = [Image(uri=image.name)]
 
-    # TODO directorywalker.py, parsers.py, template.py: search directories for images that aren't being tracked by existing second level readmes and update or create one if it doesn't exist
+    for directory, images in untracked_images.items():
+        template_engine.update_images(images, directory / "02readme.rst")
+
+    # TODO template.py, directorywalker.py: fill out image template and update second level readmes
 
     return ExitCode.NORMAL
 
