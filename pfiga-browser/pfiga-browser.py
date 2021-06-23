@@ -12,7 +12,7 @@ from error import ExitCode
 from template import TemplateEngine
 
 
-def main(args) -> int:
+def main(args) -> ExitCode:
     """
     Entry point for the pfiga-browser program.
 
@@ -27,8 +27,6 @@ def main(args) -> int:
     index_parser: ReadmeDirectoryParser
     template_engine: TemplateEngine = TemplateEngine()
 
-    print("index: ", index, end="\n\n")
-
     # validate index file
     try:
         index_parser = ReadmeDirectoryParser(index)
@@ -42,12 +40,8 @@ def main(args) -> int:
     # parse first level readme paths from index file
     first_level_readme_list: List[Path] = index_parser.parse()
 
-    print("first level readmes:")
-    for path in first_level_readme_list:
-        print(path)
-    print()
-
     second_level_readme_list: List[Path] = []
+
     # parse second level readme paths from each of the first level readmes
     for path in first_level_readme_list:
         try:
@@ -59,12 +53,8 @@ def main(args) -> int:
             print("Error processing first level readme: File '%s' not found" % (path))
             return ExitCode.FILENOTFOUND
 
-    print("second level readmes:")
-    for path in second_level_readme_list:
-        print(path)
-    print()
-
     image_collection_map: Dict[Path, ImageCollection] = {}
+
     # process each second level readme and store image data found in the readme
     for path in second_level_readme_list:
         try:
@@ -80,8 +70,7 @@ def main(args) -> int:
     image_readme_list: List[Path] = []
 
     for path, collection in image_collection_map.items():
-        image_readme_list.extend([path / str(image) for image in collection.collection])
-
+        image_readme_list.extend([path.joinpath(str(image)) for image in collection.collection])
 
     # verify images found in the file are present on disk
     for path, collection in image_collection_map.items():
@@ -90,11 +79,6 @@ def main(args) -> int:
             if not image_valid:
                 image_readme_list.remove(path / str(image))
                 print("could not find image: '%s' on path: '%s'" % (image, path))
-
-    print("image collection map:")
-    for path, collection in image_collection_map.items():
-        print("%s: %s" % (path, collection))
-    print()
 
     # TODO directorywalker.py, parsers.py, template.py: search for first and second level readme files that aren't being tracked and update relevant files
     all_first_level_readmes: List[Path] = []
@@ -114,8 +98,57 @@ def main(args) -> int:
         # TODO config.py: update image suffixes to be user configurable
         all_images.extend(directory_walkler.find_all_images(exts=[".png", ".odg", ".svg"]))
 
-
     # TODO add user options to automatically update untracked files (does this by default at the moment)
+
+    untracked_first_level_readmes: List[Path] = []
+    untracked_second_level_readmes: List[Path] = []
+    untracked_images: Dict[Path, List[Image]] = {}
+
+    # find untracked first level readmes
+    for path in all_first_level_readmes:
+        if path not in first_level_readme_list:
+            untracked_first_level_readmes.append(path)
+
+    # find untracked second level readmes
+    for path in all_second_level_readmes:
+        if path not in second_level_readme_list:
+            untracked_second_level_readmes.append(path)
+
+    # find untracked images
+    for image in all_images:
+        if image not in image_readme_list:
+            if image.parent in untracked_images.keys():
+                untracked_images[image.parent].append(Image(uri=image.name))
+            else:
+                untracked_images[image.parent] = [Image(uri=image.name)]
+
+    # update index with untracked first level readmes
+    template_engine.update_index(untracked_first_level_readmes, index)
+
+    # TODO: update first level readmes with untracked second level readmes
+
+    # update second level readmes with untracked images
+    for directory, images in untracked_images.items():
+        template_engine.update_images(images, directory.joinpath("02readme.rst"))
+
+    # TODO: move info logging to logging module (logging.py?)
+
+    print("index: ", index, end="\n\n")
+
+    print("first level readmes:")
+    for path in first_level_readme_list:
+        print(path)
+    print()
+
+    print("second level readmes:")
+    for path in second_level_readme_list:
+        print(path)
+    print()
+
+    print("image collection map:")
+    for path, collection in image_collection_map.items():
+        print("%s: %s" % (path, collection))
+    print()
 
     for path in all_first_level_readmes:
         if path not in first_level_readme_list:
@@ -127,25 +160,12 @@ def main(args) -> int:
             print("found untracked second level readme: '%s'" % (path))
     print()
 
-    # TODO directorywalker.py, template.py: search directories for images that aren't being tracked by existing second level readmes and update or create one if it doesn't exist
-    untracked_images: Dict[Path, List[Image]] = {}
-
     for image in all_images:
         if image not in image_readme_list:
             print("found untracked image: '%s'" % (image))
     print()
 
-    for image in all_images:
-        if image not in image_readme_list:
-            if image.parent in untracked_images.keys():
-                untracked_images[image.parent].append(Image(uri=image.name))
-            else:
-                untracked_images[image.parent] = [Image(uri=image.name)]
-
-    for directory, images in untracked_images.items():
-        template_engine.update_images(images, directory / "02readme.rst")
-
-    # TODO template.py, directorywalker.py: fill out image template and update second level readmes
+    # TODO directorywalker.py, template.py: search directories for images that aren't being tracked by existing second level readmes and update or create one if it doesn't exist
 
     return ExitCode.NORMAL
 

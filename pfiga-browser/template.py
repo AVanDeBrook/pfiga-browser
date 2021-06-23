@@ -84,3 +84,20 @@ class TemplateEngine(object):
         # append rendered string to file
         with outpath.open("a") as f_outpath:
             f_outpath.write(rendered_text)
+
+    def update_index(self, paths: List[Path], outpath: Path) -> None:
+        """
+        Update `outpath` with with the paths in `paths`.
+
+        :param paths: List of paths to first level readme's to append to the index file.
+
+        :param outpath: `Path` to the index file to update.
+        """
+        if not outpath.exists() and not outpath.is_file():
+            raise FileNotFoundError("Could not find file to append to: '%s'" % outpath)
+
+        index_template = self.environment.get_template("index.rst")
+        rendered_text = index_template.render(paths=[str(path.relative_to(outpath.parent)) for path in paths])
+
+        with outpath.open("a") as f_outfile:
+            f_outfile.write(rendered_text)
