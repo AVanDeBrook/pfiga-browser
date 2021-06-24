@@ -24,18 +24,26 @@ $ python -m build
 ## Running
 The command line interface for this application is, as of yet, undocumented. However, it is very simple at the moment. It requires one input, the index file of the project, to run. See regex below:
 ```
-pfiga-browser <path>
+pfiga-browser/pfiga-browser.py <path>
 ```
 * `path` is either a relative or absolute path to an index file (usually `index.rst` see `test/test_file_browser_v2/pfiga/index.rst` and `test/4gr/00readme.rst` as an example)
 
 Example execution:
 ```bash
-$ pfiga-browser test/test_file_browser_v2/pfiga/index.rst
+$ chmod +x pfiga-browser/pfiga-browser.py
+$ pfiga-browser/pfiga-browser.py test/test_file_browser_v2/pfiga/index.rst
 ```
-**Note**: Depending on how it was built and installed, `pfiga-browser` may need to be run as `pfiga-browser/pfiga-browser.py` from the root of the git repo.
+Alternatively:
+```bash
+$ python pfiga-browser/pfiga-browser.py test/test_file_browser_v2/pfiga/index.rst
+```
+**Note**: At the moment the program needs to be run from within the git repo so that it can find the template and configuration files it needs to execute correctly. One of the items on the To-Do list is to make the program runnable from anywhere on the system.
 
 # To-Do List
 * See TODO statements in code base for more specifics
+* Package Installation:
+  * Create environment variables for template and config file locations
+  * Create a configuration file for the program with template and config locations (not to be confused with project specific configuration files)
 * Command Line Interface Arguments:
   * Add CLI documentation
   * Add error handling for too many, too few, or incorrect arguments
