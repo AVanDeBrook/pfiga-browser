@@ -5,11 +5,11 @@ from typing import List, Dict
 from pathlib import Path
 from argparse import ArgumentParser
 # pfiga-browser level imports
-from parsers import ReadmeDirectoryParser, ReadmeImageParser
-from directorywalker import DirectoryWalker
-from imageinfo import Image, ImageCollection, verify_image
-from error import ExitCode
-from template import TemplateEngine
+from pfiga_browser.parsers import ReadmeDirectoryParser, ReadmeImageParser
+from pfiga_browser.directorywalker import DirectoryWalker
+from pfiga_browser.imageinfo import Image, ImageCollection, verify_image
+from pfiga_browser.error import ExitCode
+from pfiga_browser.template import TemplateEngine
 
 
 def main(args) -> ExitCode:
@@ -46,7 +46,8 @@ def main(args) -> ExitCode:
     for path in first_level_readme_list:
         try:
             # need a new parser object each time so it operates on and crafts directories correctly
-            first_level_parser: ReadmeDirectoryParser = ReadmeDirectoryParser(path)
+            first_level_parser: ReadmeDirectoryParser = ReadmeDirectoryParser(
+                path)
             # add all second level readme paths to collection
             second_level_readme_list.extend(first_level_parser.parse())
         except FileNotFoundError:
@@ -70,7 +71,8 @@ def main(args) -> ExitCode:
     image_readme_list: List[Path] = []
 
     for path, collection in image_collection_map.items():
-        image_readme_list.extend([path.joinpath(str(image)) for image in collection.collection])
+        image_readme_list.extend([path.joinpath(str(image))
+                                 for image in collection.collection])
 
     # verify images found in the file are present on disk
     for path, collection in image_collection_map.items():
@@ -78,7 +80,8 @@ def main(args) -> ExitCode:
             image_valid = verify_image(image, path)
             if not image_valid:
                 image_readme_list.remove(path / str(image))
-                print("could not find image: '%s' on path: '%s'" % (image, path))
+                print("could not find image: '%s' on path: '%s'" %
+                      (image, path))
 
     # TODO directorywalker.py, parsers.py, template.py: search for first and second level readme files that aren't being tracked and update relevant files
     all_first_level_readmes: List[Path] = []
@@ -90,13 +93,16 @@ def main(args) -> ExitCode:
         directory_walkler = DirectoryWalker(path.parent)
 
         # TODO config.py: update first level readme name to be user configurable
-        all_first_level_readmes.extend(directory_walkler.first_level_paths("01readme.rst"))
+        all_first_level_readmes.extend(
+            directory_walkler.first_level_paths("01readme.rst"))
 
         # TODO config.py: update second level readme name to be user configurable
-        all_second_level_readmes.extend(directory_walkler.second_level_paths("02readme.rst"))
+        all_second_level_readmes.extend(
+            directory_walkler.second_level_paths("02readme.rst"))
 
         # TODO config.py: update image suffixes to be user configurable
-        all_images.extend(directory_walkler.find_all_images(exts=[".png", ".odg", ".svg"]))
+        all_images.extend(directory_walkler.find_all_images(
+            exts=[".png", ".odg", ".svg"]))
 
     # TODO add user options to automatically update untracked files (does this by default at the moment)
 
@@ -132,16 +138,19 @@ def main(args) -> ExitCode:
             readmes2add: List[Path] = []
             for second_level_readme in untracked_second_level_readmes:
                 try:
-                    relative_path = second_level_readme.relative_to(first_level_readme.parent)
+                    relative_path = second_level_readme.relative_to(
+                        first_level_readme.parent)
                     readmes2add.append(relative_path)
                 except ValueError:
                     continue
-            template_engine.update_first_level_readme(readmes2add, first_level_readme)
+            template_engine.update_first_level_readme(
+                readmes2add, first_level_readme)
 
     # update second level readmes with untracked images
     if untracked_images:
         for directory, images in untracked_images.items():
-            template_engine.update_images(images, directory.joinpath("02readme.rst"))
+            template_engine.update_images(
+                images, directory.joinpath("02readme.rst"))
 
     # TODO: move info logging to logging module (logging.py?)
 
@@ -182,7 +191,7 @@ def main(args) -> ExitCode:
     return ExitCode.NORMAL
 
 
-if __name__ == "__main__":
+def run():
     # TODO document/add CLI arguments
     # TODO move argument parser to its own file (arguments.py?)
     argparser = ArgumentParser()
@@ -194,3 +203,7 @@ if __name__ == "__main__":
     print("program exited with status: '%s'" % (exit_code.name))
 
     exit(exit_code.value)
+
+
+if __name__ == "__main__":
+    run()

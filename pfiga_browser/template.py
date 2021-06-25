@@ -7,7 +7,7 @@ import os
 # jinja level imports
 import jinja2 as jinja
 # pfiga-browser level imports
-from imageinfo import Image, ImageCollection
+from pfiga_browser.imageinfo import Image, ImageCollection
 
 
 class TemplateLoader(jinja.BaseLoader):
@@ -33,7 +33,8 @@ class TemplateLoader(jinja.BaseLoader):
         source: str = ""
 
         if not path.exists():
-            raise jinja.TemplateNotFound("Could not find template: '%s'" % path)
+            raise jinja.TemplateNotFound(
+                "Could not find template: '%s'" % path)
 
         mtime = os.path.getmtime(str(path))
 
@@ -42,7 +43,8 @@ class TemplateLoader(jinja.BaseLoader):
 
         return (source, str(path), lambda: mtime == os.path.getmtime(path))
 
-def add_indent(text: str, level:int = 1) -> str:
+
+def add_indent(text: str, level: int = 1) -> str:
     """
     Add `level` levels of indent to `text`. `text` must be lines in a file separated by a carriage return.
 
@@ -59,6 +61,7 @@ def add_indent(text: str, level:int = 1) -> str:
         indented_text += ("\t" * level) + line.strip() + "\n"
 
     return indented_text
+
 
 class TemplateEngine(object):
     """Sets up the jinja2 template engine and environment and provides methods for rendering and updating readme files."""
@@ -88,15 +91,19 @@ class TemplateEngine(object):
         """
         # type checking and argument validation (in that order)
         if not isinstance(images, (List, ImageCollection)):
-            raise TypeError("Expected List or ImageCollection type for argument 'images' but got '%s'" % type(images))
+            raise TypeError(
+                "Expected List or ImageCollection type for argument 'images' but got '%s'" % type(images))
         if not isinstance(outpath, Path):
-            raise TypeError("Expected Path type for argument outpath but got '%s'" % type(outpath))
+            raise TypeError(
+                "Expected Path type for argument outpath but got '%s'" % type(outpath))
         if not outpath.exists() and not outpath.is_file():
-            raise FileNotFoundError("Could not find file to append to: '%s'" % outpath)
+            raise FileNotFoundError(
+                "Could not find file to append to: '%s'" % outpath)
 
         # render template and save text
         image_template = self.environment.get_template("readme.rst")
-        rendered_text = image_template.render(images=images.collection if isinstance(images, ImageCollection) else images)
+        rendered_text = image_template.render(
+            images=images.collection if isinstance(images, ImageCollection) else images)
 
         # append rendered string to file
         with outpath.open("a") as f_outpath:
@@ -113,10 +120,12 @@ class TemplateEngine(object):
         :raises: `FileNotFoundError` if `outpath` is not a file or does not exist.
         """
         if not outpath.exists() and not outpath.is_file():
-            raise FileNotFoundError("Could not find file to append to: '%s'" % outpath)
+            raise FileNotFoundError(
+                "Could not find file to append to: '%s'" % outpath)
 
         readme_template = self.environment.get_template("index.rst")
-        rendered_text = readme_template.render(paths=[str(path) for path in paths])
+        rendered_text = readme_template.render(
+            paths=[str(path) for path in paths])
 
         with outpath.open("a") as f_outpath:
             f_outpath.write(add_indent(rendered_text))
@@ -132,10 +141,12 @@ class TemplateEngine(object):
         :raises: `FileNotFoundError` if `outpath` is not a file or does not exist.
         """
         if not outpath.exists() and not outpath.is_file():
-            raise FileNotFoundError("Could not find file to append to: '%s'" % outpath)
+            raise FileNotFoundError(
+                "Could not find file to append to: '%s'" % outpath)
 
         index_template = self.environment.get_template("index.rst")
-        rendered_text = index_template.render(paths=[str(path.relative_to(outpath.parent)) for path in paths])
+        rendered_text = index_template.render(
+            paths=[str(path.relative_to(outpath.parent)) for path in paths])
 
         with outpath.open("a") as f_outfile:
             f_outfile.write(add_indent(rendered_text))

@@ -149,6 +149,7 @@ class ImageCollection(object):
         """Return a list of string representations of the images in the collection."""
         return str([str(image) for image in self.collection])
 
+
 def verify_image(image: Image, path: Path) -> bool:
     """
     Return true if `image` URI is present in `path`, false otherwise.

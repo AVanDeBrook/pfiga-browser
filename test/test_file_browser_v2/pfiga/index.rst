@@ -12,3 +12,6 @@ File browser for the pfiga system
 
    1pj/01readme.rst
    4gr/01readme.rst
+	
+	1pj/proj4/01readme.rst
+	

@@ -20,3 +20,9 @@ is saved locally. Suggested captions:
 
 .. image:: img04.svg
    :width: 300
+
+**img04.odg**. Add description here.
+
+.. image:: img04.odg
+   :width: 300
+

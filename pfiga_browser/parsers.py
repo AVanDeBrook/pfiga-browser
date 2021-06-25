@@ -20,7 +20,7 @@ from docutils.parsers import rst
 from docutils.utils import new_document
 from docutils.parsers.rst import directives
 # pfiga-browser level imports
-from imageinfo import ImageCollection, Image, ItemNotFoundError
+from pfiga_browser.imageinfo import ImageCollection, Image, ItemNotFoundError
 
 
 class directory(nodes.General, nodes.Element):
@@ -118,7 +118,8 @@ class RstParser(object):
         self.parser = rst.Parser()
 
         # create a document object for storing the AST information from the reST document
-        self.rst_document = new_document(str(path.absolute()), settings=frontend.OptionParser(components=(rst.Parser,)).get_default_values())
+        self.rst_document = new_document(str(path.absolute()), settings=frontend.OptionParser(
+            components=(rst.Parser,)).get_default_values())
 
     def parse(self) -> nodes.document:
         """
@@ -286,7 +287,8 @@ class ReadmeParser(object):
 
     def parse(self) -> Any:
         """Abstract function definition (needs to be implemented by extending class)."""
-        raise NotImplementedError("%s: must implement the run() function in the class." % (self.__class__.__name__))
+        raise NotImplementedError(
+            "%s: must implement the run() function in the class." % (self.__class__.__name__))
 
 
 class ReadmeDirectoryParser(ReadmeParser):
@@ -350,7 +352,8 @@ class ReadmeImageParser(ReadmeParser):
         # instantiate a parser and parse the readme to get an AST
         parsed_rst = RstParser(self.path, self.content).parse()
         # walk through the AST and process the directives and descriptions
-        parsed_rst.walk(SecondLevelProcessor(parsed_rst, image_collection, description_map))
+        parsed_rst.walk(SecondLevelProcessor(
+            parsed_rst, image_collection, description_map))
 
         # set descriptions in the Image objects to what was found in the readme
         for name, description in description_map.items():
