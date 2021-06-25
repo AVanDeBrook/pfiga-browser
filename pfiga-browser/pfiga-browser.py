@@ -123,13 +123,25 @@ def main(args) -> ExitCode:
                 untracked_images[image.parent] = [Image(uri=image.name)]
 
     # update index with untracked first level readmes
-    template_engine.update_index(untracked_first_level_readmes, index)
+    if untracked_first_level_readmes:
+        template_engine.update_index(untracked_first_level_readmes, index)
 
     # TODO: update first level readmes with untracked second level readmes
+    if untracked_second_level_readmes:
+        for first_level_readme in first_level_readme_list:
+            readmes2add: List[Path] = []
+            for second_level_readme in untracked_second_level_readmes:
+                try:
+                    relative_path = second_level_readme.relative_to(first_level_readme.parent)
+                    readmes2add.append(relative_path)
+                except ValueError:
+                    continue
+            template_engine.update_first_level_readme(readmes2add, first_level_readme)
 
     # update second level readmes with untracked images
-    for directory, images in untracked_images.items():
-        template_engine.update_images(images, directory.joinpath("02readme.rst"))
+    if untracked_images:
+        for directory, images in untracked_images.items():
+            template_engine.update_images(images, directory.joinpath("02readme.rst"))
 
     # TODO: move info logging to logging module (logging.py?)
 

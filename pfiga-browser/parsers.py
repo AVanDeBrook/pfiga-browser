@@ -67,9 +67,10 @@ class TocTree(rst.Directive):
         for entry in self.content:
             # create directory node as a representation of the path in the AST
             # include both rawtext and path version for completeness' sake
-            dir_node = directory(rawtext=entry)
-            dir_node["fullpath"] = str(Path(entry))
-            nodelist.append(dir_node)
+            if entry not in ("", " ", "\n"):
+                dir_node = directory(rawtext=entry)
+                dir_node["fullpath"] = str(Path(entry.strip()))
+                nodelist.append(dir_node)
 
         return nodelist
 
