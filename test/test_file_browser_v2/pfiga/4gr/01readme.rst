@@ -7,4 +7,3 @@
 
     folder_figs/02readme.rst
     more_figs/02readme.rst
-	

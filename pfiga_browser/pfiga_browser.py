@@ -191,7 +191,7 @@ def main(args) -> ExitCode:
     return ExitCode.NORMAL
 
 
-def run():
+def run() -> int:
     # TODO document/add CLI arguments
     # TODO move argument parser to its own file (arguments.py?)
     argparser = ArgumentParser()
@@ -202,7 +202,7 @@ def run():
 
     print("program exited with status: '%s'" % (exit_code.name))
 
-    exit(exit_code.value)
+    return exit_code.value
 
 
 if __name__ == "__main__":

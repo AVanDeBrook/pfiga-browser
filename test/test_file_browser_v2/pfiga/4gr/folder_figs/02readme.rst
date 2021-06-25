@@ -21,9 +21,3 @@ There is an img02a.png file; no need to include this file. Suggested captions:
    
 .. image:: img02.png
    :width: 300
-
-**img02a.png**. Add description here.
-
-.. image:: img02a.png
-   :width: 300
-
