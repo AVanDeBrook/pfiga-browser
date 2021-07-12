@@ -17,3 +17,8 @@ build
 **/build
 dist
 **/dist
+
+# Python virtual environment artifacts
+bin
+lib*
+pyvenv.cfg
