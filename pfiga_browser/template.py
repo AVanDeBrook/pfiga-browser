@@ -1,13 +1,15 @@
 #!/usr/bin/env python
 """TODO Add file doc string."""
 # python level imports
+import os
 from typing import Union, List
 from pathlib import Path
-import os
+from importlib.resources import files
 # jinja level imports
 import jinja2 as jinja
 # pfiga-browser level imports
 from pfiga_browser.imageinfo import Image, ImageCollection
+from pfiga_browser import templates
 
 
 class TemplateLoader(jinja.BaseLoader):
@@ -71,9 +73,14 @@ class TemplateEngine(object):
     def __init__(self):
         """Create a jinja2 environment for the package."""
         self.environment = jinja.Environment(
-            loader=TemplateLoader(Path("templates").absolute()),
+            loader=TemplateLoader(files(templates)),
             autoescape=jinja.select_autoescape()
         )
+
+        # templates_path = Path(files(pfiga_browser.templates)).absolute()
+
+        # self.readme_template = templates_path.joinpath("readme.rst")
+        # self.index_template = templates_path.joinpath("index.rst")
 
     def update_images(self, images: Union[List[Image], ImageCollection], outpath: Path) -> None:
         """
@@ -102,6 +109,7 @@ class TemplateEngine(object):
 
         # render template and save text
         image_template = self.environment.get_template("readme.rst")
+
         rendered_text = image_template.render(
             images=images.collection if isinstance(images, ImageCollection) else images)
 
@@ -124,6 +132,7 @@ class TemplateEngine(object):
                 "Could not find file to append to: '%s'" % outpath)
 
         readme_template = self.environment.get_template("index.rst")
+
         rendered_text = readme_template.render(
             paths=[str(path) for path in paths])
 
@@ -145,6 +154,7 @@ class TemplateEngine(object):
                 "Could not find file to append to: '%s'" % outpath)
 
         index_template = self.environment.get_template("index.rst")
+
         rendered_text = index_template.render(
             paths=[str(path.relative_to(outpath.parent)) for path in paths])
 

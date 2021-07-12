@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import os
 from pathlib import Path
 
 __version__ = "0.1.3"
