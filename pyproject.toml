@@ -1,3 +1,0 @@
-[build-system]
-requires = ["docutils", "jinja2", "setuptools"]
-build-backend = "setuptools.build_meta"
