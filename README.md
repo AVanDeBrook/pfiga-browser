@@ -3,47 +3,50 @@
 # Installing Dependences, Building, and Running
 ## Installing Dependencies
 The following dependencies are needed to build and run the program:
-* `build` (cannot be installed automatically)
 * `docutils`
 * `jinja2`
 * `setuptools`
 
-`build` can be installed using the following. It is used to automatically build the project and install its dependencies (see below).
+`build` can be used to automatically install dependencies and create a wheel to install the project as a package.
 ```bash
 $ python -m pip install -U build
-```
-
-## Building
-Building the project will also automatically install the dependent packages from PyPi.
-
-Use the following in the root of the git repository to build the project and install its dependencies:
-```bash
 $ python -m build
+$ python -m pip install dist/pfiga-browser-0.1.3-py3-none-any.whl
 ```
 
 ## Running
+The program can be run directly using `python` or `python -m` or a package can be built and run using `build` and `pip`.
+
 The command line interface for this application is, as of yet, undocumented. However, it is very simple at the moment. It requires one input, the index file of the project, to run. See regex below:
 ```
 pfiga-browser/pfiga-browser.py <path>
 ```
 * `path` is either a relative or absolute path to an index file (usually `index.rst` see `test/test_file_browser_v2/pfiga/index.rst` and `test/4gr/00readme.rst` as an example)
 
-Example execution:
+To run the program directly, use the following:
 ```bash
-$ chmod +x pfiga-browser/pfiga-browser.py
-$ pfiga-browser/pfiga-browser.py test/test_file_browser_v2/pfiga/index.rst
+$ python pfiga_browser/pfiga_browser.py test/test_file_browser_v2/pfiga/index.rst
 ```
-Alternatively:
+
+To run the program as a package, use the following steps (I would recommend using a virtual environment for development):
 ```bash
-$ python pfiga-browser/pfiga-browser.py test/test_file_browser_v2/pfiga/index.rst
+# Virtual environment (for active development)
+$ python venv .
+$ source bin/activate
+# Build wheel for package installation
+$ python -m build
+# Install using pip
+$ python -m pip install dist/pfga_browser-0.1.3-py3-none-any.whl
+# Run as a module (and print help/usage text)
+$ python -m pfiga_browser
 ```
 **Note**: At the moment the program needs to be run from within the git repo so that it can find the template and configuration files it needs to execute correctly. One of the items on the To-Do list is to make the program runnable from anywhere on the system.
 
 # To-Do List
 * See TODO statements in code base for more specifics
-* Package Installation:
-  * Create environment variables for template and config file locations
-  * Create a configuration file for the program with template and config locations (not to be confused with project specific configuration files)
+* ~~Package Installation:~~
+  * ~~Create environment variables for template and config file locations~~
+  * ~~Create a configuration file for the program with template and config locations (not to be confused with project specific configuration files~~
 * Command Line Interface Arguments:
   * Add CLI documentation
   * Add error handling for too many, too few, or incorrect arguments
@@ -54,11 +57,11 @@ $ python pfiga-browser/pfiga-browser.py test/test_file_browser_v2/pfiga/index.rs
   * Add configuration module for processing files, options, etc.
   * Add template for config files (jinja, yaml)
   * Add default config file
-* Templates:
-  * Finish templates
-  * Finish module to render and write templates:
-    * Images
-    * Indexes
+* ~~Templates:~~
+  * ~~Finish templates~~
+  * ~~Finish module to render and write templates:~~
+    * ~~Images~~
+    * ~~Indexes~~
 * Logging/Error Handling:
   * Add prettier console logging
   * Add better error handling w/ more verbose output:
@@ -93,8 +96,3 @@ This project is still in its infancy, so there are many functionalities that are
 This project makes heavy use of reStructuredText and thereby uses the `docutils` library to read and process those files (why re-invent the wheel right?)
 
 The reStructuredText files that the application reads also assume that Sphinx's `toctree` directive will be present in some or all files. As such, this program uses a stripped down, heavily modified version of Sphinx's `toctree` implementation. The inclusion and usage of this will be reflected in the license and documentation as necessary as it becomes more fully complete (I was forced to re-invent the wheel here because the "official" implementation of `toctree` is so closley coupled with Sphinx that it no longer works with `docutils`).
-
-Lastly, the automated dependency installation workflow I've used here is somewhat new and not fully supported as of yet and requires a `pip` version >= ~19 and `python` version >= ~3.5. If you encounter any problem due to this, I recommend you install the dependencies manually using the snippet below, however, I will not be diligently keeping this up to date, so ensure you have the latest version of all packages (listed above and in `pyproject.toml` and `setup.cfg`):
-```
-python -m pip install -U build docutils jinja2 setuptools
-```
