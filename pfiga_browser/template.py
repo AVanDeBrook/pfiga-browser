@@ -2,26 +2,27 @@
 """TODO Add file doc string."""
 # python level imports
 import os
+from importlib import abc, resources
+import importlib.abc
 from typing import Union, List
 from pathlib import Path
-from importlib.resources import files
 # jinja level imports
 import jinja2 as jinja
 # pfiga-browser level imports
+import pfiga_browser.templates
 from pfiga_browser.imageinfo import Image, ImageCollection
-from pfiga_browser import templates
 
 
 class TemplateLoader(jinja.BaseLoader):
     """Implementation of a template loader class to work with the jinja2 template engine."""
 
-    def __init__(self, path: Path):
+    def __init__(self, template_resource: abc.Traversable):
         """
         Create an instance of a TemplateLoader class from the jinja2.BaseLoader class.
 
-        :param path: Path to jinja2 templates.
+        :param template_resource: Traversable template resource (see importlib.resources)
         """
-        self.path = path
+        self.resource = template_resource
 
     def get_source(self, environment, template):
         """
@@ -31,19 +32,15 @@ class TemplateLoader(jinja.BaseLoader):
 
         :param template: Template file to load.
         """
-        path: Path = self.path.joinpath(template)
-        source: str = ""
+        full_path = self.resource.joinpath(template)
 
-        if not path.exists():
+        if not full_path.exists():
             raise jinja.TemplateNotFound(
-                "Could not find template: '%s'" % path)
+                "Could not find template: '%s'" % full_path)
 
-        mtime = os.path.getmtime(str(path))
+        mtime = os.path.getmtime(full_path)
 
-        with path.open("r") as f_path:
-            source = f_path.read()
-
-        return (source, str(path), lambda: mtime == os.path.getmtime(path))
+        return (full_path.read_text(), str(full_path), lambda: mtime == os.path.getmtime(full_path))
 
 
 def add_indent(text: str, level: int = 1) -> str:
@@ -73,14 +70,9 @@ class TemplateEngine(object):
     def __init__(self):
         """Create a jinja2 environment for the package."""
         self.environment = jinja.Environment(
-            loader=TemplateLoader(files(templates)),
+            loader=TemplateLoader(resources.files(pfiga_browser.templates)),
             autoescape=jinja.select_autoescape()
         )
-
-        # templates_path = Path(files(pfiga_browser.templates)).absolute()
-
-        # self.readme_template = templates_path.joinpath("readme.rst")
-        # self.index_template = templates_path.joinpath("index.rst")
 
     def update_images(self, images: Union[List[Image], ImageCollection], outpath: Path) -> None:
         """
